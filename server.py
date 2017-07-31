@@ -71,7 +71,7 @@ while 1:
                         #close the file
                         f.close()
 
-            if nextcmd.startswith("uploaditnow") == True:
+            if nextcmd.startswith("upload") == True:
 
             			# file name
             			upFile = nextcmd[7:]
