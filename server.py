@@ -71,6 +71,28 @@ while 1:
                         #close the file
                         f.close()
 
+            if nextcmd.startswith("uploaditnow") == True:
+
+            			# file name
+            			upFile = nextcmd[7:]
+
+            			# open file
+            			g = open(upFile, 'rb')
+            			print 'Uploading in progress... ' + upFile
+
+
+            			# uploading
+            			while 1:
+            				fileData = g.read()
+            				if not fileData: break
+            				# begin sending file
+            				conn.sendall(fileData)
+            			g.close()
+            			time.sleep(0.8)
+
+            			conn.sendall('EOFEOFEOFEOFEOFX')
+            			time.sleep(0.8)
+
 
 
     # else, just print

