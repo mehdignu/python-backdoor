@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import subprocess,socket
-HOST = '192.168.1.11'
+HOST = 'your ip'
 PORT = 443
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
