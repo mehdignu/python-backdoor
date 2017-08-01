@@ -13,7 +13,6 @@ key = '9SeT2kaxYlRYS675TxzHwB2el4Pa15A3'
 
 # This is your safe, you can use it to encrypt or decrypt messages
 box = nacl.secret.SecretBox(key)
-<<<<<<< HEAD
 
 # clear function the window
 clear = lambda: os.system('clear')
